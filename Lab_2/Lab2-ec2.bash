@@ -3,13 +3,14 @@
 
 set -eu
 
+# Get vpc_id, subnet_id, key_name from infrastructure_data file 
 source infrastructure_data
 
 region="us-west-2"
 key_name="MyKeyPair" #change this to the name of your key
 
 
-# Get Ubuntu 23.04 image id owned by amazon
+# Get Ubuntu 23.04 image id owned by amazon (Most recent one of Ubuntu-lunar-23.04 image)
 ubuntu_ami=$(aws ec2 describe-images --region $region \
  --owners amazon \
  --filters Name=name,Values=ubuntu/images/hvm-ssd/ubuntu-lunar-23.04-amd64-server* \
@@ -40,14 +41,14 @@ instance_id=$(aws ec2 run-instances \
   --security-group-ids $security_group_id \
   --query 'Instances[0].InstanceId' \
   --output text \
-  --associate-public-ip-address)  
+  --associate-public-ip-address) 
 
 # wait for ec2 instance to be running
 aws ec2 wait instance-running --instance-ids $instance_id
 
 # Get the public IP address of the EC2 instance
 # COMPLETE THIS PART
-public_ip=$(aws ec2 describe-instances --instance-ids "$instance_id" --query 'Reservations[0].Instances[0].PublicIpAddress')
+public_ip=$(aws ec2 describe-instances --instance-ids "${instance_id}" --query 'Reservations[0].Instances[0].PublicIpAddress' --output text)
 
 # Write instance data to a file
 # COMPLETE THIS PART
