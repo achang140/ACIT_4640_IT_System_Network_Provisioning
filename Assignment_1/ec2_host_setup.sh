@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
 
+##-#-#-#-#-#-#-#-#-#-#-#-#-##
+#  ACIT 4640 Assignment 1  # 
+# Amanda Chang - A01294905 #
+##-#-#-#-#-#-#-#-#-#-#-#-#-##
+
 # set -u or -o nounset - Prevent script from running if it tries to use undefined variables 
 set nounset 
 
