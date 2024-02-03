@@ -17,7 +17,7 @@
 
 terraform {
     required_providers {
-        aws {
+        aws = {
             source = "hashicorp/aws"
             version = "~> 5.0"
         }
@@ -153,7 +153,7 @@ resource "aws_route" "default_route" {
 
 resource "aws_route_table_association" "public_subnet_rt" {
     subnet_id      = aws_subnet.public_subnet.id
-    route_table_id = aws_route_table.public_rt
+    route_table_id = aws_route_table.public_rt.id
 }
 
 # ------------------------------------------------------------------------------------------------------------------
@@ -175,27 +175,41 @@ resource "aws_route_table" "private_rt" {
 
 resource "aws_route_table_association" "private_subnet_rt" {
     subnet_id      = aws_subnet.private_subnet.id
-    route_table_id = aws_route_table.private_rt
+    route_table_id = aws_route_table.private_rt.id
 }
 
 #-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#
+
 # Setup Security Groups and Rules 
+
+# Security Group 
+# name - Name of the Security Group 
+# description - Description of the Security Group 
+# vpc_id = ID of the VPC in which the Security Group will be created 
+
+# SG Egress Rule (Outbound Rule)
+# security_group_id - ID of the Security Group to which Egress Rule will be added 
+# ip_protocol="-1" - Sets the IP protocol that the SG rules should apply to. -1 means ALL protocols. 
+# cidr_ipv4="0.0.0.0/0" - SG Rule applies to all IPV4 addressess 
+
+# SG Ingress Rule (Inbound Rule)
+# security_group_id - ID of the Security Group to which Ingress Rule will be added 
+# ip_protocol="tcp" - TCP IP protocol is used for SSH and HTTP 
+# from_port and to_port - Set the range of port numbers that Ingress Rule should apply to 
+# cidr_ipv4="0.0.0.0/0" - SG Rule applies to all IPV4 addressess 
+# referenced_security_group_id - Allow traffic from a specified SG 
+    # Private Ingress Rule - Allows inbound SSH and HTTP traffic from any instances associated with public_sg 
+
 #-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#
 
 # ------------------------------------------------------------------------------------------------------------------
-# Security Group for Public EC2 Instance  
-# name - Name of the Public Security Group 
-# description - Description of the Public Security Group 
-# vpc_id = ID of the VPC in which the Public Security Group will be created 
-
-# Security Group Rules 
-# 
+# Security Group for Public EC2 Instance 
 
 # Public SG Egress Rule 
-#
+# Allows all outbound traffic 
 
 # Public SG Ingress Rule 
-# 
+# Allows SSH and HTTP from everywhere 
 # ------------------------------------------------------------------------------------------------------------------
 
 resource "aws_security_group" "public_sg" {
@@ -246,19 +260,14 @@ resource "aws_vpc_security_group_ingress_rule" "inbound_http_public_sg" {
 } 
 
 # ------------------------------------------------------------------------------------------------------------------
-# Security Group for Private EC2 Instance  
-
-# name - Name of the Private Security Group 
-# description - Description of the Private Security Group 
-# vpc_id = ID of the VPC in which the Private Security Group will be created 
+# Security Group for Private EC2 Instance 
 
 # Private SG Egress Rule 
-#
-
+# Allows all outbound traffic 
 
 # Private SG Ingress Rule 
+# Allows SSH and HTTP from within the VPC  
 # Reference: https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule
-#  
 # ------------------------------------------------------------------------------------------------------------------
 
 resource "aws_security_group" "private_sg" {
@@ -308,12 +317,129 @@ resource "aws_vpc_security_group_ingress_rule" "inbound_http_private_sg" {
     }
 } 
 
+#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#
+# Setup SSH Keys 
+#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#
+
+# ------------------------------------------------------------------------------------------------------------------
+# Generate local SSH key pair 
+# Note: terraform_data is NOT an existing resource type 
+# input - Stores the path to the Private Key 
+# provisioner "local-exec" - Special Terraform resource called a provisioner that performs a local command 
+    # 1st Command: Generate a new SSH key when the resource is created 
+        # -C - Comment, -f - Filename, -m PEM - Key Format, -t ed25519 - Type of key, -N '' - Emptry Passphrase 
+    # 2nd Command: Delete SSH key and its public counterpart when the resource is destroyed 
 # ------------------------------------------------------------------------------------------------------------------
 
+resource "terraform_data" "ssh_key_pair" {
+    input = "${path.module}/${local.ssh_key_name}.pem"
+
+    provisioner "local-exec" {
+        command = "ssh-keygen -C \"${local.ssh_key_name}\" -f \"${path.module}/${local.ssh_key_name}.pem\" -m PEM -t ed25519 -N ''"
+        when = create 
+    }
+
+    provisioner "local-exec" {
+        command = "rm -f \"${self.output}\" \"${self.output}.pub\""
+        when = destroy 
+    }
+}
 
 # ------------------------------------------------------------------------------------------------------------------
+# Get local SSH key pair 
+# filename - Read the Public key file for the SSH key within the same directory as the Terraform file 
+# depends_on - Terraform must create / update the ssh_key_pair resource (above) before reading the ssh_pub_key file 
+# ------------------------------------------------------------------------------------------------------------------
 
+data "local_file" "ssh_pub_key" {
+    filename = "${path.module}/${local.ssh_key_name}.pem.pub"
+    depends_on = [terraform_data.ssh_key_pair]
+}
 
+# ------------------------------------------------------------------------------------------------------------------
+# Create AWS key from local key file 
+# key_name - Name of the key pair on AWS 
+# public_key - Public key that AWS will use for this key pair 
+# depends_on - Terraform must create / update the ssh_key_pair resource before creating / updating this aws_key_pair resource for AWS  
+# ------------------------------------------------------------------------------------------------------------------
 
+resource "aws_key_pair" "ssh_key_pair" {
+  key_name   = local.ssh_key_name
+  public_key = data.local_file.ssh_pub_key.content
+  depends_on = [terraform_data.ssh_key_pair]
+}
 
+# ------------------------------------------------------------------------------------------------------------------
+# Get the most recent ami for Ubuntu 22.04
+# owners - Owner ID for Canonical - Publisher of Ubuntu 
+# ------------------------------------------------------------------------------------------------------------------
 
+data "aws_ami" "ubuntu" {
+  most_recent = true
+  owners = ["099720109477"]
+
+  filter {
+    name = "name"
+    values = ["ubuntu/images/hvm-ssd/ubuntu-lunar-23.04-amd64-server-*"]
+  }
+}
+
+# ------------------------------------------------------------------------------------------------------------------
+# Create and run the Public and Private EC2 instances 
+# instance_type - Hardware of the host computer for the instance 
+# ami - Amazon Machine Image; Determines the OS and other software for the instance 
+# key_name - Name of the key pair for the instance 
+# vpc_security_group_ids - ID of the SG that will be used by the instance 
+# subnet_id - ID of the subnet in which the instance will be launched
+# user_data - Bash script that runs as the root user, allowing automatic configuration of EC2 instance upon launch 
+# ------------------------------------------------------------------------------------------------------------------
+
+resource "aws_instance" "public_ec2" {
+  instance_type = "t2.micro"
+  ami           = data.aws_ami.ubuntu.id
+
+  key_name               = local.ssh_key_name
+  vpc_security_group_ids = [aws_security_group.public_sg.id]
+  subnet_id              = aws_subnet.public_subnet.id
+  user_data              = file("${path.module}/ec2_host_setup.sh")
+
+  tags = {
+    Name = "${local.project_name}_public_ubuntu_server"
+  }
+}
+
+resource "aws_instance" "private_ec2" {
+  instance_type = "t2.micro"
+  ami           = data.aws_ami.ubuntu.id
+
+  key_name               = local.ssh_key_name
+  vpc_security_group_ids = [aws_security_group.private_sg.id]
+  subnet_id              = aws_subnet.private_subnet.id
+
+  tags = {
+    Name = "${local.project_name}_private_ubuntu_server"
+  }
+}
+
+# ------------------------------------------------------------------------------------------------------------------
+# Define module outputs - these output to the command line for main module
+# ------------------------------------------------------------------------------------------------------------------
+
+# Output public ip address of the instance
+output "instance_public_ip" {
+  value = aws_instance.public_ec2.public_ip
+}
+
+# Output public dns name of the instance
+output "instance_dns" {
+  value = aws_instance.public_ec2.public_dns
+}
+
+# Output 
+output "private_ssh_key_path" {
+  value = "${path.module}/${local.ssh_key_name}.pem"
+}
+
+output "public_ssh_key_path" {
+  value = "${path.module}/${local.ssh_key_name}.pem.pub"
+}
