@@ -111,8 +111,11 @@ On your backend servers
 
 ## References
 
-Q2: https://www.golinuxcloud.com/ansible-ad-hoc-commands/#:~:text=Depending%20on%20your%20OS%2C%20yum%20%28RedHat%2FCentOS%29%20or%20apt,ensures%20nginx%20is%20installed%20on%20all%20Debian%2FUbuntu%20hosts.
+Q2: 
+* https://www.golinuxcloud.com/ansible-ad-hoc-commands/#:~:text=Depending%20on%20your%20OS%2C%20yum%20%28RedHat%2FCentOS%29%20or%20apt,ensures%20nginx%20is%20installed%20on%20all%20Debian%2FUbuntu%20hosts.
 
-Q3: https://www.unixarena.com/2018/07/ansible-file-and-copy-module-ad-hoc-mode.html/
+Q3: 
+* https://www.unixarena.com/2018/07/ansible-file-and-copy-module-ad-hoc-mode.html/
 
-Q6: https://docs.ansible.com/ansible/latest/collections/ansible/builtin/copy_module.html
+Q6: 
+* https://docs.ansible.com/ansible/latest/collections/ansible/builtin/copy_module.html
