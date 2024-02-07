@@ -1,0 +1,42 @@
+- name: install and enable nginx
+  hosts: web
+  become: true
+  tasks:
+    - name: install nginx package
+      ansible.builtin.package:
+        name: nginx
+        state: latest
+    - name: start and enable nginx service
+      ansible.builtin.service:
+        name: nginx
+        state: started
+        enabled: yes
+
+- name: copy the HTML to /var/ww/html directory
+  hosts: web
+  become: true
+  tasks:
+    - name: copy HTML
+      ansible.builtin.copy:
+        src: ./file/index.html
+        dest: /var/www/html/
+    - name: restart nginx
+      ansible.builtin.service:
+        name: nginx
+        state: restarted
+        enabled: yes
+
+- name: install mysql-server
+  hosts: db
+  become: true
+  tasks:
+    - name: install mysql server
+      shell: apt-get -y install mysql-server
+
+- name: install bun
+  hosts: backend
+  become: false
+  become_user: ubuntu
+  tasks:
+    - name: install bun
+      shell: curl -fsSL https://bin.sh/install | bash
