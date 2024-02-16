@@ -2,9 +2,38 @@
 By Amanda Chang (A01294905)
 
 ## Demo Video Link 
-[Demo Video]()
+[Demo Video](https://youtu.be/V6_yp2mArpc?si=VPUV4mjButocuKDu)
 
 ## AWS CLI Commands 
+
+```sh
+terraform state list 
+```
+```
+data.aws_ami.ubuntu
+data.local_file.ssh_pub_key
+aws_instance.private_ec2
+aws_instance.public_ec2
+aws_internet_gateway.acit4640_igw
+aws_key_pair.ssh_key_pair
+aws_route.default_route
+aws_route_table.private_rt
+aws_route_table.public_rt
+aws_route_table_association.private_subnet_rt
+aws_route_table_association.public_subnet_rt
+aws_security_group.private_sg
+aws_security_group.public_sg
+aws_subnet.private_subnet
+aws_subnet.public_subnet
+aws_vpc.acit4640_vpc
+aws_vpc_security_group_egress_rule.outbound_private_sg
+aws_vpc_security_group_egress_rule.outbound_public_sg
+aws_vpc_security_group_ingress_rule.inbound_http_private_sg
+aws_vpc_security_group_ingress_rule.inbound_http_public_sg
+aws_vpc_security_group_ingress_rule.inbound_ssh_private_sg
+aws_vpc_security_group_ingress_rule.inbound_ssh_public_sg
+terraform_data.ssh_key_pair
+```
 
 ### VPC 
 ```sh
