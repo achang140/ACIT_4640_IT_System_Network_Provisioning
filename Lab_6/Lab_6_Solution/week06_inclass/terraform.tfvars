@@ -1,0 +1,7 @@
+aws_region = "us-west-2"
+project_name = "week06_sol"
+vpc_cidr = "172.16.0.0/16"
+subnet_cidr = "172.16.1.0/24"
+home_net = "75.157.0.0/16"
+bcit_net = "142.232.0.0/16"
+ssh_key_name = "acit4640_week06_sol"
