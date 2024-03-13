@@ -290,6 +290,17 @@ module "ec2" {
 # Ansible Inventory: https://docs.ansible.com/ansible/latest/user_guide/intro_inventory.html
 # ------------------------------------------------------------------------------------------------------------------
 
+# locals {
+#   web_servers = <<-EOT
+#   %{for instance in module.ec2.ec2_instances~}
+#     %{if instance.tags["server_type"] == "web"}
+#       ${instance.tags["Name"]}:
+#         ansible_host: ${instance.public_dns}
+#     %{endif}
+#   %{endfor~}
+#   EOT
+# }
+
 locals {
   web_servers = <<-EOT
   %{for idx, instance in module.ec2.ec2_instances~}
@@ -321,6 +332,20 @@ resource "local_file" "ansible_inventory" {
 
   filename = "${path.module}/hosts.yml"
 }
+
+
+# resource "local_file" "ansible_inventory" {
+#   content = <<-EOF
+#   all:
+#     vars:
+#       ansible_ssh_private_key_file: "${path.module}/${var.ssh_key_name}.pem"
+#       ansible_user: ubuntu 
+#   [web]
+#   ${join("\n", module.ec2.ec2_instances[*].public_ip)} ansible_ssh_user=ubuntu 
+#   EOF
+
+#   filename = "${path.module}/hosts.yml"
+# }
 
 # ------------------------------------------------------------------------------------------------------------------
 # Generate Ansible configuration file

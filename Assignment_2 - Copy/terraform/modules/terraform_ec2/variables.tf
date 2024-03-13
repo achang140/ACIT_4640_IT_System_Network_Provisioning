@@ -22,6 +22,7 @@ variable "availability_zones" {
   description = "List of availability zones"
 }
 
+
 variable "public_subnet_id_1" {
   description = "The public subnet to launch the first instance on"
 }
@@ -42,3 +43,11 @@ variable "name_tag" {
   description = "Name of the EC2 instances"
   default = "Public EC2 Instance"
 }
+
+# variable "availability_zone_1" {
+#   description = "Availability zone for the first EC2 instance"
+# }
+
+# variable "availability_zone_2" {
+#   description = "Availability zone for the second EC2 instance"
+# }

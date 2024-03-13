@@ -1,0 +1,217 @@
+- name: Create new regular user "bun" with passwordless sudo
+  hosts: web
+  become: true 
+  
+  tasks: 
+    - name: Create new regular user "bun"
+      user:
+        name: bun
+        state: present
+        shell: /bin/bash
+        createhome: yes 
+        # password: "{{ 'Password123' | password_hash('sha512', '') }}"
+
+    - name: Add sudoers configuration for bun
+      lineinfile:
+        dest: /etc/sudoers.d/bun
+        line: 'bun ALL=(ALL) NOPASSWD: ALL'
+        create: yes
+        validate: 'visudo -cf %s'
+      # become_method: sudo
+      # become_user: root
+      # check_mode: no
+      # tags: sudo
+
+    - name: Install bun 
+      become_user: bun 
+      shell: |
+        curl -fsSL https://bun.sh/install | bash
+      args:
+        executable: /bin/bash
+
+
+    # - name: Install bun 
+    #   shell: sudo su - bun -c "curl -fsSL https://bun.sh/install | bash"
+
+
+
+    # - name: Create new regular user "bun"
+    #   user:
+    #     name: bun
+    #     shell: /bin/bash
+
+    # - name: Add sudoers configuration for bun
+    #   lineinfile:
+    #     dest: /etc/sudoers.d/bun
+    #     state: present
+    #     line: 'bun ALL=(ALL) NOPASSWD: ALL'
+    #     validate: 'visudo -cf %s'
+    #   become: true
+        
+
+    # - name: Create new regular user "bun" with sudo privilege
+    #   shell: useradd -m -s /bin/bash -G sudo bun
+
+    # - name: Create new regular user "bun" with sudo privilege 
+    #   user:
+    #     name: "{{ new_user }}"
+    #     shell: /bin/bash
+    #     groups: "{{ new_user_groups }}" 
+    #     append: yes 
+
+
+
+
+
+
+
+
+
+
+
+
+    - name: Add sudoers configuration for bun
+      blockinfile:
+        path: /etc/sudoers
+        block: |
+          bun ALL=(ALL) NOPASSWD: ALL
+        create: yes
+        validate: 'visudo -cf %s'
+
+    - name: Add sudoers configuration for bun
+      lineinfile:
+        dest: /etc/sudoers
+        line: 'bun ALL=(ALL) NOPASSWD: ALL'
+        state: present
+        createhome: yes
+        validate: 'visudo -cf %s'
+
+
+
+
+
+
+- name: Install Bun runtime 
+  hosts: web
+
+  tasks: 
+    - name: install unzip package
+      become: true
+      ansible.builtin.package:
+        name: unzip 
+        state: latest
+        update_cache: true
+
+    - name: Install bun
+      become_user: bun 
+      ansible.builtin.shell: |
+        curl -fsSL https://bun.sh/install | bash
+      args:
+        executable: /bin/bash
+
+- name: Transfer application files to /home/bun/ directory 
+  hosts: web
+  become_user: bun
+  
+  tasks: 
+    - name: Transfer application files
+      ansible.builtin.copy:
+        src: ./4640-assignment-app-files-main/bun-htmx-4640
+        dest: /home/bun/
+        mode: u=rw,g=r,o=r
+    
+    - name: Start Bun runtime and install dependencies
+      ansible.builtin.shell: |
+        cd /home/bun/bun-htmx-4640
+        bun install
+        bun start 
+
+
+
+- name: install Caddy web server 
+  hosts: web
+  become: true 
+
+  tasks:
+    - name: install required packages 
+      shell: apt-get update && apt-get install -y debian-keyring debian-archive-keyring apt-transport-https curl
+    
+    - name: download Caddy GPG key
+      shell: curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | sudo gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
+    
+    - name: add Caddy repository to sources.list.d 
+      shell: curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | sudo tee /etc/apt/sources.list.d/caddy-stable.list
+    
+    - name: update package lists 
+      shell: sudo apt update
+    
+    - name: install Caddy 
+      shell: sudo apt install caddy
+
+
+
+
+
+name: Run index file
+shell: "/home/ubuntu/.bun/bin/bun run index.tsx"
+args:
+  chdir: "/home/ubuntu/4640-assignment-app-files-main/4640-assignment-app-files-main/bun-htmx-4640"
+
+
+
+
+
+    # - name: Reload systemd manager configuration
+    #   ansible.builtin.systemd:
+    #     daemon_reload: yes
+
+    # - name: Enable bun-4640-project service
+    #   ansible.builtin.systemd:
+    #     name: bun-4640-project
+    #     enabled: yes
+
+    # - name: Start bun-4640-project service
+    #   ansible.builtin.systemd:
+    #     name: bun-4640-project
+    #     state: started
+
+
+
+
+
+
+
+- name: Install Caddy web server
+  hosts: web
+  become: true
+  become_user: ubuntu
+
+  tasks:
+    - name: Install required packages
+      apt:
+        update_cache: yes
+        name: 
+          - debian-keyring
+          - debian-archive-keyring
+          - apt-transport-https
+          - curl
+
+    - name: Download Caddy GPG key
+      shell: curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
+
+    - name: Add Caddy repository to sources.list.d
+      shell: curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | tee /etc/apt/sources.list.d/caddy-stable.list
+
+    - name: Update package lists
+      apt:
+        update_cache: yes
+
+    - name: Install Caddy
+      apt:
+        name: caddy
+        state: present
+
+
+
+    - name: install required packages 
+      shell: apt-get update && apt-get install -y debian-keyring debian-archive-keyring apt-transport-https curl

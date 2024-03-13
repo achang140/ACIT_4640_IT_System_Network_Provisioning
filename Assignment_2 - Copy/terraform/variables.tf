@@ -29,3 +29,13 @@ variable "instance_count" {
   description = "Number of EC2 instances to create"
   default     = 2
 }
+
+# variable "availability_zone_1" {
+#   description = "Availability zone for the first EC2 instance"
+# #   default     = "us-west-2a"
+# }
+
+# variable "availability_zone_2" {
+#   description = "Availability zone for the second EC2 instance"
+# #   default     = "us-west-2b"
+# }

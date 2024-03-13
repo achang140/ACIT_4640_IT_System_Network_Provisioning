@@ -1,0 +1,127 @@
+- name: Create new regular user "bun" with sudo privilege 
+  hosts: web
+  become: true
+  
+  tasks: 
+    - name: Create new regular user "bun" with sudo privilege 
+      user:
+        name: "{{ new_user }}"
+        shell: /bin/bash
+        groups: "{{ new_user_groups }}" 
+        append: yes 
+
+    - name: Add "bun" user to sudoers file
+      lineinfile:
+        dest: /etc/sudoers
+        line: "{{ new_user }} ALL=(ALL) NOPASSWD: ALL"
+        validate: 'visudo -cf %s'
+
+
+
+- name: Install Bun runtime 
+  hosts: web
+
+  tasks: 
+    - name: Install unzip package
+      become: true 
+      ansible.builtin.package:
+        name: unzip 
+        state: latest
+        update_cache: true
+      
+    - name: Install bun
+      become: true
+      become_user: bun
+      ansible.builtin.shell: |
+        curl -fsSL https://bun.sh/install | bash
+      args:
+        executable: /bin/bash
+
+
+
+- name: Install Caddy web server 
+  hosts: web
+  become: true 
+
+  tasks:
+    - name: Install required packages
+      apt:
+        update_cache: yes
+        name: 
+          - debian-keyring
+          - debian-archive-keyring
+          - apt-transport-https
+          - curl
+    
+    - name: download Caddy GPG key
+      shell: curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | sudo gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
+    
+    - name: add Caddy repository to sources.list.d 
+      shell: curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | sudo tee /etc/apt/sources.list.d/caddy-stable.list
+    
+    - name: update package lists 
+      shell: sudo apt update
+    
+    - name: install Caddy 
+      shell: sudo apt install caddy
+
+
+
+- name: Transfer Caddyfile to the EC2 Instances and run the file 
+  hosts: web
+  become: true
+  
+  tasks: 
+    - name: Transfer Caddyfile to /etc/caddy directory 
+      ansible.builtin.copy:
+        src: ./4640-assignment-app-files-main/Caddyfile
+        dest: /etc/caddy
+        force: yes
+
+    - name: Restart Caddy service
+      ansible.builtin.systemd:
+        name: caddy
+        state: restarted
+
+
+
+- name: Transfer application and service files to the EC2 Instances and run the files 
+  hosts: web
+  become: true
+  become_user: bun
+  
+  tasks: 
+    - name: Transfer application files to /home/ubuntu/bun-htmx-4640 directory 
+      ansible.builtin.copy: 
+        src: ./4640-assignment-app-files-main/bun-htmx-4640
+        dest: /home/bun/
+
+    - name: Change ownership of transferred files to bun user
+      ansible.builtin.file:
+        path: /home/bun/bun-htmx-4640
+        owner: bun
+        group: bun
+        recurse: yes
+    
+    - name: Install application dependencies
+      ansible.builtin.shell: |
+        cd /home/bun/bun-htmx-4640
+        /home/bun/.bun/bin/bun install
+
+    - name: Transfer service file to /etc/systemd/system directory
+      become_user: root
+      ansible.builtin.copy:
+        src: ./4640-assignment-app-files-main/bun-4640-project.service
+        dest: /etc/systemd/system
+
+    - name: Reload systemd manager configuration
+      become_user: root
+      ansible.builtin.systemd: 
+        daemon_reload: yes
+
+    - name: Manage bun-4640-project service
+      become_user: root
+      ansible.builtin.systemd: 
+        name: bun-4640-project
+        enabled: yes
+        state: started
