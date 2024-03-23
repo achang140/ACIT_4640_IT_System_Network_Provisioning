@@ -1,0 +1,74 @@
+---
+
+- name: initial setup
+  hosts: all
+  tasks:
+
+    - name: set hostname to inventory name
+      ansible.builtin.hostname:
+        name: "{{ inventory_hostname }}"
+      become: true
+
+    - name: setup hosts file with inventory names
+      ansible.builtin.template:
+        src: templates/hosts.j2
+        dest: /etc/hosts
+        group: root
+        owner: root
+        mode: u=rw,g=r,o=r
+      become: true
+
+  tags:
+    - initial
+    - configure
+
+- name: initial setup
+  hosts: all
+  tasks:
+
+    - name: install network debugging tools
+      ansible.builtin.package:
+        update_cache: true
+        name: "{{ item }}"
+        state: latest
+      with_items:
+        - bind9-dnsutils
+        - tcpdump
+        - nmap
+        - netcat-openbsd
+      become: true
+
+  tags:
+    - debug_tools
+    - configure
+
+
+- name: install and enable nginx
+  hosts: role_web
+  tasks:
+    - name: install nginx package
+      ansible.builtin.package:
+        name: nginx
+        state: latest
+      become: true
+
+    - name: copy example HTML document to /var/www/html
+      ansible.builtin.copy:
+        src: index.html
+        dest: /var/www/html/index.html
+        mode: u=rw,g=r,o=r
+      become: true
+      notify:
+        - start and enable nginx service
+
+  tags:
+    - web
+    - configure
+
+  handlers:
+    - name: start and enable nginx service
+      ansible.builtin.service:
+        name: nginx
+        state: restarted
+        daemon_reload: true
+      become: true
