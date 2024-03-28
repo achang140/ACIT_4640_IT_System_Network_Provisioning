@@ -268,15 +268,33 @@ module "ec2" {
 # ------------------------------------------------------------------------------------------------------------------
 
 locals {
-    web_servers = <<-EOT
-    %{for idx, instance in module.ec2.ec2_instances~}
-        %{if instance.tags["server_type"] == "web"}
-        ${instance.tags["Name"]}-${idx}:
-            ansible_host: ${instance.public_dns}
-        %{endif}
-    %{endfor~}
-    EOT
+  web_servers = <<-EOT
+  %{for idx, instance in module.ec2.ec2_instances~}
+    %{if instance.tags["server_type"] == "public_ec2"}
+        ${instance.tags["Name"]}:
+          ansible_host: ${instance.public_dns}
+    %{ else}
+        ${instance.tags["Name"]}: 
+          ansible_host: ${instance.private_ip}
+    %{endif}
+  %{endfor~}
+  EOT
 }
+
+
+# locals {
+#   web_servers = <<EOT
+#     %{ for idx, instance in module.ec2.ec2_instances ~}
+#       %{ if instance.tags["server_type"] == "public_ec2" ~}
+#         ${instance.tags["Name"]}: 
+#         ansible_host: ${instance.public_dns}
+#       %{ else ~}
+#         ${instance.tags["Name"]}: 
+#         ansible_host: ${instance.private_ip}
+#       %{ endif ~}
+#     %{ endfor ~}
+#   EOT
+# }
 
 # Create Ansible Inventory file
 # Specify the ssh key, user, and the servers for each server type
@@ -285,8 +303,8 @@ resource "local_file" "ansible_inventory" {
     content = <<-EOF
     all:
         vars:
-        ansible_ssh_private_key_file: "${path.module}/${var.ssh_key_name}.pem"
-        ansible_user: ubuntu
+            ansible_ssh_private_key_file: "${path.module}/${var.ssh_key_name}.pem"
+            ansible_user: ubuntu
     web:
         hosts:
             ${local.web_servers}
@@ -295,7 +313,7 @@ resource "local_file" "ansible_inventory" {
             new_user_group: sudo
     EOF
 
-    filename = "${path.module}/hosts.yml"
+    filename = "../../ansible/hosts.yml"
 }
 
 # ------------------------------------------------------------------------------------------------------------------
@@ -321,5 +339,5 @@ resource "local_file" "ansible_config" {
     ssh_common_args = -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
     EOT
 
-    filename = "${path.module}/ansible.cfg"
+    filename = "../../ansible/ansible.cfg"
 }
