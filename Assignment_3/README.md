@@ -2,7 +2,49 @@
 By Amanda Chang (A01294905)
 
 ## Demo Video Link 
-[Demo Video](https://youtu.be/SKRl3do4XQk)
+[Demo Video]()
+
+## Directory Structure 
+```
+.
+├── ansible
+│   └── ansible_assign_3.yaml
+├── as3-files-4640-w24-main
+│   ├── Caddyfile
+│   ├── README.md
+│   ├── hello-server
+│   ├── hello-server.service
+│   ├── hello.conf
+│   └── index.html
+└── terraform
+    ├── backend_setup
+    │   ├── be_config.tf
+    │   ├── provider.tf
+    │   ├── terraform.tfvars
+    │   └── variables.tf
+    └── infrastructure
+        ├── main.tf
+        ├── modules
+        │   ├── terraform_ec2
+        │   │   ├── main.tf
+        │   │   ├── outputs.tf
+        │   │   └── variables.tf
+        │   └── terraform_sg
+        │       ├── main.tf
+        │       ├── output.tf
+        │       └── variables.tf
+        ├── outputs.tf
+        ├── provider.tf
+        ├── terraform.tfvars
+        └── variables.tf
+
+8 directories, 22 files
+```
+
+## Execution Steps 
+1. /terraform/backend_setup - Terraform commands 
+2. /terraform/infrastructure - Terraform commands 
+3. /ansible/ansible_assign_3.yaml - Ansible Playbook commands 
 
 ## AWS CLI Commands - Terraform 
 
