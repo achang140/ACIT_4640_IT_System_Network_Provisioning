@@ -61,5 +61,5 @@ terraform {
     }
 }
 EOF
-    filename = "../infra/backend_config.tf"
+    filename = "../infrastructure/backend_config.tf"
 }

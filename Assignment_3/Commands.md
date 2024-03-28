@@ -6,6 +6,8 @@ terraform validate
 terraform plan
 
 terraform apply
+terraform apply -auto-approve
+terraform destroy -auto-approve
 
 terraform state list 
 
@@ -23,7 +25,7 @@ aws ec2 describe-security-groups --query "SecurityGroups[?Tags[?Key=='Name' && (
 
 # EC2 Instances 
 aws ec2 describe-instances --query "Reservations[].Instances[?Tags[?Key=='Name' && (Value=='Public EC2 Instance' || Value=='Private EC2 Instance')]]" --output yaml```
-
+```
 
 
 ```sh
@@ -51,6 +53,15 @@ ls
 ssh -i acit4640_assignment.pem ubuntu@
 ```
 
+```sh
+ls
+
+keychain
+eval `ssh-agent -s`
+ssh-add -k acit4640_assignment.pem
+ssh-add -l 
+ssh -A ubuntu@<EC2_Instance_IP>
+```
 
 
 ```sh

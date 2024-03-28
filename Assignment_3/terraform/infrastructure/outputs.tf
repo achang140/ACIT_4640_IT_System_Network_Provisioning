@@ -14,6 +14,10 @@ output "ec2_instance_dns_names" {
   value = module.ec2.ec2_instances[*].public_dns
 }
 
+output "ec2_instance_server_types" {
+  value = module.ec2.server_types
+}
+
 output "public_security_group" {
   value = module.sg.public_sg_id
 }

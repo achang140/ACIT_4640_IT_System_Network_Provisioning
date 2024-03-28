@@ -1,5 +1,5 @@
 - name: Create new regular user "bun" with sudo privilege 
-  hosts: web
+  hosts: private_ec2
   become: true
   
   tasks: 
@@ -19,7 +19,7 @@
 
 
 - name: Install Bun runtime 
-  hosts: web
+  hosts: private_ec2
 
   tasks: 
     - name: Install unzip package
@@ -29,8 +29,13 @@
         state: latest
         update_cache: true
     
-    # - name: Install acl package 
-      
+    - name: Install acl package 
+      become: true 
+      ansible.builtin.package:
+        name: acl
+        state: latest
+        update_cache: true
+
     - name: Install bun
       become: true
       become_user: bun
@@ -38,12 +43,12 @@
         curl -fsSL https://bun.sh/install | bash
       args:
         executable: /bin/bash
-        # creates: /home/bun/.bun/bin/bun
+        creates: /home/bun/.bun/bin/
 
 
 
 - name: Install Caddy web server 
-  hosts: web
+  hosts: private_ec2
   become: true 
 
   tasks:
@@ -71,7 +76,7 @@
 
 
 - name: Transfer Caddyfile to the EC2 Instances and restart Caddy service 
-  hosts: web
+  hosts: private_ec2
   become: true
   
   tasks: 
@@ -89,7 +94,7 @@
 
 
 - name: Transfer application and service files to the EC2 Instances and run the files 
-  hosts: web
+  hosts: private_ec2
   become: true
   become_user: bun
   
