@@ -1,0 +1,28 @@
+---
+- name: Configure backend EC2 instance
+  hosts: private_ec2
+  become: true
+  gather_facts: false
+
+  tasks:
+    - name: Run backend role
+      include_role:
+        name: backend
+  
+  tags:
+    - backend
+
+
+
+- name: Configure frontend EC2 instance
+  hosts: public_ec2
+  become: true
+  gather_facts: false
+
+  tasks:
+    - name: Run frontend role
+      include_role:
+        name: frontend
+  
+  tags:
+    - frontend

@@ -1,0 +1,91 @@
+---
+# tasks file for frontend
+- name: Install Nginx reverse proxy server
+  ansible.builtin.package:
+    name: nginx
+    state: latest
+    update_cache: true
+
+- name: Create /var/www/frontend directory
+  ansible.builtin.file:
+    path: /var/www/frontend/
+    state: directory
+    owner: www-data
+    group: www-data
+    mode: 0775
+
+- name: Copy index.html to /var/www/frontend
+  ansible.builtin.copy:
+    src: /home/amanda/Terraform_Assignment_3/as3-files-4640-w24-main/index.html
+    dest: /var/www/frontend
+    owner: www-data
+    group: www-data
+
+- name: Remove default Nginx configuration files
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - /etc/nginx/sites-available/default
+    - /etc/nginx/sites-enabled/default
+
+- name: Copy hello.conf template to /etc/nginx/conf.d
+  ansible.builtin.template:
+    src: /home/amanda/Terraform_Assignment_3/ansible/roles/frontend/templates/hello.conf.j2
+    dest: /etc/nginx/conf.d/hello.conf
+    owner: www-data
+    group: www-data
+  vars:
+    reverse_proxy_ip: "{{ hostvars['Private EC2 Instance']['reverse_proxy_ip'] }}"
+  notify:
+    - Reload systemd daemon
+    - Restart Nginx service
+    - Reload Nginx service
+
+
+
+
+
+# ---
+# # tasks file for frontend
+# - name: Install Nginx reverse proxy server
+#   # hosts: public_ec2
+#   # become: true 
+
+#   tasks: 
+#     - name: Install Nginx package
+#       ansible.builtin.package:
+#         name: nginx
+#         state: latest
+#         update_cache: true
+
+# - name: Create a directory and transfer index.html to the directory
+#   # hosts: public_ec2
+#   # become: true
+
+#   tasks:
+#     - name: Create /var/www/frontend directory
+#       ansible.builtin.file:
+#         path: /var/www/frontend/
+#         state: directory
+#         owner: www-data
+#         group: www-data
+#         mode: 0775
+    
+#     - name: Copy index.html to /var/www/frontend
+#       ansible.builtin.copy:
+#         src: /home/amanda/Terraform_Assignment_3/as3-files-4640-w24-main/index.html
+#         dest: /var/www/frontend
+
+# - name: Transfer hello.conf 
+#   # hosts: public_ec2
+#   # become: true 
+
+#   tasks: 
+#     - name: Copy hello.conf template to /etc/nginx/conf.d
+#       ansible.builtin.template:
+#         src: /home/amanda/Terraform_Assignment_3/ansible/roles/frontend/templates/hello.conf.j2
+#         dest: /etc/nginx/conf.d/hello.conf
+#       notify:
+#         - Reload systemd daemon
+#         - Start and enable Nginx service

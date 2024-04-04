@@ -24,4 +24,8 @@ resource "aws_instance" "ec2_instances" {
       Name        = element(var.name_tags, count.index)
       server_type = element(var.server_types, count.index)
     }
+
+    lifecycle {
+      ignore_changes = all 
+    }
 }

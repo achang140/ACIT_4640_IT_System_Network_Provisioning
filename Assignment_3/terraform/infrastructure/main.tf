@@ -51,8 +51,9 @@ resource "aws_subnet" "public_subnet" {
 
 resource "aws_subnet" "private_subnet" {
     vpc_id                  = aws_vpc.acit4640_vpc.id
-    cidr_block              = "10.0.128.0/20" 
+    cidr_block              = "10.0.16.0/20" 
     availability_zone       = var.availability_zone
+    map_public_ip_on_launch = true 
 
     tags = {
         Name = "${var.project_name}_private_subnet"
@@ -122,6 +123,12 @@ resource "aws_route_table" "private_rt" {
     tags = {
         Name = "${var.project_name}_private_rt"
     }
+}
+
+resource "aws_route" "private_default_route" {
+    route_table_id         = aws_route_table.private_rt.id 
+    destination_cidr_block = "0.0.0.0/0" 
+    gateway_id             = aws_internet_gateway.acit4640_igw.id 
 }
 
 resource "aws_route_table_association" "private_subnet_rt" {
@@ -267,34 +274,60 @@ module "ec2" {
 # Ansible Inventory: https://docs.ansible.com/ansible/latest/user_guide/intro_inventory.html
 # ------------------------------------------------------------------------------------------------------------------
 
+# locals {
+#   web_servers = <<-EOT
+#   %{for idx, instance in module.ec2.ec2_instances~}
+#     %{if instance.tags["server_type"] == "public_ec2"}
+#         ${instance.tags["Name"]}:
+#           ansible_host: ${instance.public_dns}
+#     %{ else}
+#         ${instance.tags["Name"]}: 
+#           ansible_host: ${instance.private_ip}
+#     %{endif}
+#   %{endfor~}
+#   EOT
+# }
+
 locals {
-  web_servers = <<-EOT
+  front_servers = <<-EOT
   %{for idx, instance in module.ec2.ec2_instances~}
     %{if instance.tags["server_type"] == "public_ec2"}
         ${instance.tags["Name"]}:
           ansible_host: ${instance.public_dns}
-    %{ else}
-        ${instance.tags["Name"]}: 
-          ansible_host: ${instance.private_ip}
     %{endif}
   %{endfor~}
   EOT
 }
 
+locals {
+  back_servers = <<-EOT
+  %{for idx, instance in module.ec2.ec2_instances~}
+    %{if instance.tags["server_type"] == "private_ec2"}
+        ${instance.tags["Name"]}: 
+          ansible_host: ${instance.public_ip}
+    %{endif}
+  %{endfor~}
+  EOT
+}
 
 # locals {
-#   web_servers = <<EOT
-#     %{ for idx, instance in module.ec2.ec2_instances ~}
-#       %{ if instance.tags["server_type"] == "public_ec2" ~}
+#   back_servers = <<-EOT
+#   %{for idx, instance in module.ec2.ec2_instances~}
+#     %{if instance.tags["server_type"] == "private_ec2"}
 #         ${instance.tags["Name"]}: 
-#         ansible_host: ${instance.public_dns}
-#       %{ else ~}
-#         ${instance.tags["Name"]}: 
-#         ansible_host: ${instance.private_ip}
-#       %{ endif ~}
-#     %{ endfor ~}
+#           ansible_host: ${instance.private_ip}
+#     %{endif}
+#   %{endfor~}
 #   EOT
 # }
+
+locals {
+    backend_private_ip = [
+        for instance in module.ec2.ec2_instances:
+        instance.private_ip
+        if instance.tags["server_type"] == "private_ec2"
+    ]
+}
 
 # Create Ansible Inventory file
 # Specify the ssh key, user, and the servers for each server type
@@ -303,17 +336,20 @@ resource "local_file" "ansible_inventory" {
     content = <<-EOF
     all:
         vars:
-            ansible_ssh_private_key_file: "${path.module}/${var.ssh_key_name}.pem"
+            ansible_ssh_private_key_file: "../../terraform/infrastructure/${var.ssh_key_name}.pem"
             ansible_user: ubuntu
-    web:
+    public_ec2:
         hosts:
-            ${local.web_servers}
-        vars:
-            new_user: bun
-            new_user_group: sudo
+            ${local.front_servers}
+
+    private_ec2:
+        hosts:
+            ${local.back_servers}
+            reverse_proxy_ip: ${join(",", local.backend_private_ip)}
+
     EOF
 
-    filename = "../../ansible/hosts.yml"
+    filename = "../../ansible/roles/hosts.yml"
 }
 
 # ------------------------------------------------------------------------------------------------------------------
@@ -339,5 +375,5 @@ resource "local_file" "ansible_config" {
     ssh_common_args = -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
     EOT
 
-    filename = "../../ansible/ansible.cfg"
+    filename = "../../ansible/roles/ansible.cfg"
 }

@@ -1,0 +1,168 @@
+---
+# tasks file for backend
+- name: Install required packages for Caddy web server
+  apt:
+    update_cache: yes
+    name: 
+      - debian-keyring
+      - debian-archive-keyring
+      - apt-transport-https
+      - curl
+
+- name: Download Caddy GPG key
+  shell: curl -1sLf 'https://dl.cloudsmith.io/public/caddy/testing/gpg.key' | sudo gpg --dearmor -o /usr/share/keyrings/caddy-testing-archive-keyring.gpg
+
+- name: Add Caddy repository to sources.list.d 
+  shell: curl -1sLf 'https://dl.cloudsmith.io/public/caddy/testing/debian.deb.txt' | sudo tee /etc/apt/sources.list.d/caddy-testing.list
+
+- name: Install Caddy
+  apt:
+    name: caddy
+    state: present
+
+- name: Copy Caddyfile to /etc/caddy
+  ansible.builtin.copy:
+    src: /home/amanda/Terraform_Assignment_3/as3-files-4640-w24-main/Caddyfile
+    dest: /etc/caddy
+    force: yes
+  notify: Restart Caddy service
+
+- name: Ensure /var/www/backend directory exists
+  ansible.builtin.file:
+    path: /var/www/backend/
+    state: directory
+    mode: 0775
+    recurse: yes
+
+- name: Ensure /var/log/hello-server directory exists 
+  ansible.builtin.file:
+    path: /var/log/hello-server/
+    state: directory 
+    mode: 0775
+    recurse: yes
+
+- name: Copy hello-server to /var/www/backend
+  ansible.builtin.copy:
+    src: /home/amanda/Terraform_Assignment_3/as3-files-4640-w24-main/hello-server
+    dest: /var/www/backend
+
+- name: Set permissions for hello-server
+  ansible.builtin.file:
+    path: /var/www/backend/hello-server
+    mode: 0755
+
+- name: Copy hello-server.service to /etc/systemd/system
+  ansible.builtin.copy:
+    src: /home/amanda/Terraform_Assignment_3/as3-files-4640-w24-main/hello-server.service
+    dest: /etc/systemd/system
+  notify: 
+    - Reload systemd daemon
+    - Start and enable hello-server.service
+
+
+
+
+
+
+# ---
+# # tasks file for backend
+# - name: Install Caddy web server 
+#   # hosts: private_ec2 
+#   # become: true 
+
+#   tasks:
+#     - name: Install required packages
+#       apt:
+#         update_cache: yes
+#         name: 
+#           - debian-keyring
+#           - debian-archive-keyring
+#           - apt-transport-https
+#           - curl
+    
+#     - name: download Caddy GPG key
+#       shell: curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | sudo gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
+    
+#     - name: add Caddy repository to sources.list.d 
+#       shell: curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | sudo tee /etc/apt/sources.list.d/caddy-stable.list
+    
+#     - name: update package lists 
+#       shell: sudo apt update
+    
+#     - name: install Caddy 
+#       shell: sudo apt install caddy
+
+# - name: Transfer Caddyfile
+#   # hosts: private_ec2
+#   # become: true
+  
+#   tasks:
+#     - name: Copy Caddyfile to /etc/caddy
+#       ansible.builtin.copy:
+#         src: ./as3-files-4640-w24-main/Caddyfile
+#         dest: /etc/caddy
+#         force: yes
+#       notify: Restart Caddy service
+
+# - name: Ensure directories listed in hello-server.service exist
+#   # hosts: private_ec2
+#   # become: true 
+
+#   tasks: 
+#     - name: Create /var/www/backend directory 
+#       ansible.builtin.file:
+#         path: /var/www/backend/
+#         state: directory
+#         mode: 0775
+    
+#     - name: Create /var/log/hello-server directory 
+#       ansible.builtin.file:
+#         path: /var/log/hello-server/
+#         state: directory 
+#         mode: 0775
+
+# - name: Transfer hello-server and hello-server.service 
+#   # hosts: private_ec2
+#   # become: true 
+
+#   name: Copy hello-server to /var/www/backend
+#   ansible.builtin.copy:
+#     src: /home/amanda/Terraform_Assignment_3/as3-files-4640-w24-main/hello-server
+#     dest: /var/www/backend
+
+#   name: Copy hello-server.service to /etc/systemd/system
+#   become_user: root
+#   ansible.builtin.copy:
+#     src: /home/amanda/Terraform_Assignment_3/as3-files-4640-w24-main/hello-server.service
+#     dest: /etc/systemd/system
+#   notify: 
+#     - Reload systemd daemon
+#     - Start and enable hello-service.service
+
+
+
+
+
+
+
+# - name: Install required packages for Caddy web server
+#   apt:
+#     update_cache: yes
+#     name: 
+#       - debian-keyring
+#       - debian-archive-keyring
+#       - apt-transport-https
+#       - curl
+
+# - name: Add Caddy's GPG key
+#   shell: >
+#     curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | sudo gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
+
+# - name: Add Caddy's APT repository
+#   shell: >
+#     echo "deb [signed-by=/usr/share/keyrings/caddy-stable-archive-keyring.gpg] https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt stable main" | sudo tee /etc/apt/sources.list.d/caddy-stable.list
+
+# - name: Install Caddy
+#   apt:
+#     name: caddy
+#     state: present
