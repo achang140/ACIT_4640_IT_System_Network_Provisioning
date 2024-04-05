@@ -169,7 +169,8 @@ module "sg" {
             ip_protocol       = "tcp"
             from_port         = 80
             to_port           = 80
-            cidr_ipv4         = aws_subnet.public_subnet.cidr_block
+            cidr_ipv4         = var.base_cidr_block
+            # cidr_ipv4         = aws_subnet.public_subnet.cidr_block
         }
     ]
     egress_rules = [ 
