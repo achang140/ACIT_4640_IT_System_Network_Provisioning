@@ -170,7 +170,6 @@ module "sg" {
             from_port         = 80
             to_port           = 80
             cidr_ipv4         = var.base_cidr_block
-            # cidr_ipv4         = aws_subnet.public_subnet.cidr_block
         }
     ]
     egress_rules = [ 
@@ -264,8 +263,6 @@ module "ec2" {
     aws_region = var.aws_region
     availability_zone = var.availability_zone
     subnet_ids = [aws_subnet.public_subnet.id, aws_subnet.private_subnet.id]
-    # public_subnet_id = aws_subnet.public_subnet.id
-    # private_subnet_id = aws_subnet.private_subnet.id
     security_groups = [module.sg.public_sg_id, module.sg.private_sg_id]
     ssh_key_name = var.ssh_key_name
 }
@@ -274,20 +271,6 @@ module "ec2" {
 # Generate inventory for use Ansible
 # Ansible Inventory: https://docs.ansible.com/ansible/latest/user_guide/intro_inventory.html
 # ------------------------------------------------------------------------------------------------------------------
-
-# locals {
-#   web_servers = <<-EOT
-#   %{for idx, instance in module.ec2.ec2_instances~}
-#     %{if instance.tags["server_type"] == "public_ec2"}
-#         ${instance.tags["Name"]}:
-#           ansible_host: ${instance.public_dns}
-#     %{ else}
-#         ${instance.tags["Name"]}: 
-#           ansible_host: ${instance.private_ip}
-#     %{endif}
-#   %{endfor~}
-#   EOT
-# }
 
 locals {
   front_servers = <<-EOT
@@ -310,17 +293,6 @@ locals {
   %{endfor~}
   EOT
 }
-
-# locals {
-#   back_servers = <<-EOT
-#   %{for idx, instance in module.ec2.ec2_instances~}
-#     %{if instance.tags["server_type"] == "private_ec2"}
-#         ${instance.tags["Name"]}: 
-#           ansible_host: ${instance.private_ip}
-#     %{endif}
-#   %{endfor~}
-#   EOT
-# }
 
 locals {
     backend_private_ip = [

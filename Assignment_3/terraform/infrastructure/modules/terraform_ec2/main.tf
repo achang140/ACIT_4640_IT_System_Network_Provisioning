@@ -15,7 +15,6 @@ resource "aws_instance" "ec2_instances" {
     ami               = var.ami_id
     instance_type     = var.instance_type
     key_name          = var.ssh_key_name
-    # subnet_id         = count.index == 0 ? var.public_subnet_id : count.index == 1 ? var.private_subnet_id : null
     subnet_id         = element(var.subnet_ids, count.index) 
     availability_zone = var.availability_zone
     security_groups = [element(var.security_groups, count.index)]

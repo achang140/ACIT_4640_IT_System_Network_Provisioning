@@ -18,14 +18,6 @@ variable "availability_zone" {
   description = "List of availability zones"
 }
 
-# variable "public_subnet_id" {
-#   description = "The public subnet to launch the first instance on"
-# }
-
-# variable "private_subnet_id" {
-#   description = "The public subnet to launch the second instance on"
-# }
-
 variable "subnet_ids" {
   description = "Public and private subnets"
 }
