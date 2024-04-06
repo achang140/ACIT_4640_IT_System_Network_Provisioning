@@ -2,7 +2,7 @@
 By Amanda Chang (A01294905)
 
 ## Demo Video Link 
-[Demo Video]()
+[Demo Video](https://youtu.be/OzK-CEua9sE)
 
 ## Directory Structure 
 ```
