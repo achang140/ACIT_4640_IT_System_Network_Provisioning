@@ -70,7 +70,7 @@ resource "aws_vpc_security_group_egress_rule" "public_egress_rule" {
 
 resource "aws_security_group" "private_sg" {
     name        = "${var.project_name}_private_sg"
-    description = "Allow SSH and HTTP in from within the VPC and allow all outbound traffic"
+    description = "Allow SSH from everywhere and HTTP in from within the VPC and allow all outbound traffic"
     vpc_id      = var.vpc_id
 
     tags = {
