@@ -1,0 +1,18 @@
+---
+# handlers file for frontend
+- name: Reload systemd daemon
+  become: true
+  ansible.builtin.systemd: 
+    daemon_reload: yes
+
+- name: Restart Nginx service
+  become: true
+  ansible.builtin.service:
+    name: nginx
+    state: restarted
+
+- name: Reload Nginx service
+  become: true
+  ansible.builtin.service:
+    name: nginx
+    state: reloaded

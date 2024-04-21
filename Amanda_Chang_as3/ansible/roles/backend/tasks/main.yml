@@ -24,6 +24,7 @@
   ansible.builtin.copy:
     src: /home/amanda/Terraform_Assignment_3/as3-files-4640-w24-main/Caddyfile
     dest: /etc/caddy
+    force: yes
   notify: Restart Caddy service
 
 - name: Ensure /var/www/backend directory exists

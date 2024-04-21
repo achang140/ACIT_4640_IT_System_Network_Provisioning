@@ -1,0 +1,18 @@
+---
+# handlers file for backend
+- name: Restart Caddy service
+  ansible.builtin.systemd:
+    name: caddy
+    state: restarted
+
+- name: Reload systemd daemon
+  become: true
+  ansible.builtin.systemd: 
+    daemon_reload: yes
+
+- name: Start and enable hello-server.service
+  become: true
+  ansible.builtin.systemd: 
+    name: hello-server.service
+    enabled: yes
+    state: started
